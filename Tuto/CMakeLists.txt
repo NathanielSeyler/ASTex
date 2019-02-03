@@ -4,13 +4,14 @@ project(ASTexTutos LANGUAGES CXX)
 
 find_package(ASTex)
 
-set( exec_list 
+set( exec_list
  tuto_pixel_types tuto_gray tuto_rgb tuto_mask 
  tuto_traverse_iterators tuto_traverse_for_all 
  tuto_color_filters
  tuto_filter1 tuto_filter2 tuto_filter3 tuto_filter4 tuto_filter5 tuto_filter6 tuto_filter7 
  tuto_png_indexed
- tuto_store)
+ tuto_store
+ tuto_bglam )
 
 foreach(exec ${exec_list})
 	add_executable(${exec} "")

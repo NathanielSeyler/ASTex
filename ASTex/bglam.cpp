@@ -11,7 +11,19 @@ Bglam::Bglam(const ImageGrayu8 &i) : bglams(0), ring(1)
     compute();
 }
 
+Bglam::Bglam(const ImageGrayu8 &i,const int &r) : bglams(0), ring(r)
+{
+    transfoImg(i);
+    compute();
+}
+
 Bglam::Bglam(const ImageRGBu8 &i) : bglams(0) , ring(1)
+{
+    transfoImg(i);
+    compute();
+}
+
+Bglam::Bglam(const ImageRGBu8 &i,const int &r) : bglams(0) , ring(r)
 {
     transfoImg(i);
     compute();
@@ -63,7 +75,7 @@ void Bglam::transfoImg(const ImageRGBu8 &i)
 void Bglam::compute()
 {
     std::cout << nb_gray_level << "x" << nb_gray_level << std::endl;
-    int window = (1+2*ring);
+    int window = 1 + 2*ring;
     int nb_matrix = window * window - 1 ;
     for(int i=0;i<nb_matrix;i++)
     {

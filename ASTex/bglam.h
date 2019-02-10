@@ -41,7 +41,9 @@ private:
 public:
     Bglam();
     Bglam(const ImageGrayu8 &);
+    Bglam(const ImageGrayu8 &,const int &);
     Bglam(const ImageRGBu8 &);
+    Bglam(const ImageRGBu8 &,const int &);
     ~Bglam();
     std::vector<itk::VariableSizeMatrix<int>> getBglams();
     const std::vector<itk::VariableSizeMatrix<int>> getBglams() const;

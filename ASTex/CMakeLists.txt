@@ -58,6 +58,9 @@ target_sources (${PROJECT_NAME} PRIVATE
         Stamping/stamp.h
         Stamping/stamper.h
         PCTS/pcts.h
+
+        bglam.h
+        labelmapsynthetiser.h
 )
 
 target_sources (${PROJECT_NAME} PRIVATE
@@ -78,6 +81,8 @@ target_sources (${PROJECT_NAME} PRIVATE
         texton_io.cpp
         Stamping/sampler.cpp
         rpn_utils.cpp
+
+        bglam.cpp
 )
 
 target_include_directories(${PROJECT_NAME} PUBLIC ${ITK_INCLUDE_DIRS} ${PNG_INCLUDE_DIRS} ${OPENEXR_INCLUDE_DIRS} ${FFTW_INCLUDES})

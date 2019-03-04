@@ -3,6 +3,7 @@
 #include <ASTex/image_gray.h>
 #include <ASTex/histogram.h>
 #include <ASTex/bglam.h>
+#include <ASTex/labelmapsynthetiser.h>
 #include <itkMatrix.h>
 #include <itkVariableSizeMatrix.h>
 #include <set>
@@ -12,7 +13,16 @@ using namespace ASTex;
 
 int main()
 {
-    //std::cout << __cplusplus << std::endl;
+    ImageRGBu8 label_map3;
+    label_map3.load("../../Label_maps_PNG/PlasterDamaged0232_S/PlasterDamaged0232_S_NH_167.135529.png");
+
+    auto start_chrono = std::chrono::system_clock::now();
+    LabelMapSynthetiser<ImageRGBu8> s(label_map3);
+    std::chrono::duration<double> elapsed_seconds = std::chrono::system_clock::now() - start_chrono;
+    std::cout << "synthe timing: " << elapsed_seconds.count() << " s." << std::endl;
+
+    return EXIT_SUCCESS;
+
     ImageGrayu8 img;
     img.initItk(5,5,true);
     img.pixelAbsolute(1,0) = 255;
@@ -27,10 +37,6 @@ int main()
     img.pixelAbsolute(2,3) = 255;
     img.pixelAbsolute(0,4) = 255;
     img.pixelAbsolute(4,4) = 255;
-
-    ImageGrayu8 img2;
-    img2.initItk(5,5,true);
-    img2.pixelAbsolute(1,2) = 255;
 
     ImageGrayu8 img3;
     img3.initItk(5,5,true);
@@ -47,39 +53,51 @@ int main()
     img3.pixelAbsolute(0,4) = 125;
     img3.pixelAbsolute(4,4) = 125;
 
-    auto start_chrono = std::chrono::system_clock::now();
+    start_chrono = std::chrono::system_clock::now();
 
-    Bglam bglams(img);
-    Bglam bglams2(img2);
-    Bglam bglams3(img3);
+    LabelMapSynthetiser<ImageGrayu8> synthe;
+    Bglam bglams(synthe.transfoImg(img),2);
+    ImageGrayu8 img2 = bglams.getRandImage();
+    img2 = synthe.transfoImgBack(img2);
+    img2.save("img_random.png");
+    Bglam bglams2(synthe.transfoImg(img2),2);
+    Bglam bglams3(synthe.transfoImg(img3),2);
     std::cout << "distance img1 et img2 : " << bglams.distance(bglams2) << std::endl;
     std::cout << "distance img1 et img3 : " << bglams.distance(bglams3) << std::endl;
 
-    std::chrono::duration<double> elapsed_seconds = std::chrono::system_clock::now() - start_chrono;
+    elapsed_seconds = std::chrono::system_clock::now() - start_chrono;
     std::cout << "bglam timing: " << elapsed_seconds.count() << " s." << std::endl;
 
     //std::cout << "bglams of img1\n" << bglams << std::endl;
     //std::cout << "bglams of img2\n" << bglams2 << std::endl;
     //std::cout << "bglams of img3\n" << bglams3 << std::endl;
-    img.save("test_bglam1.png");
-    img3.save("test_bglam3.png");
 
     ImageRGBu8 label_map1;
     //label_map1.load("../../Label_maps_PNG/flowered_wall_1k/flowered_wall_1k_cl_1.uhd.png");
-    //label_map1.load("../../Label_maps_PNG/PlasterDamaged0232_S/PlasterDamaged0232_S_NH_167.135529.png");
-    label_map1.load("../../Label_maps_PNG/Moss0101_S/Moss0101_S_NH_298.431677.png");
+    label_map1.load("../../Label_maps_PNG/PlasterDamaged0232_S/PlasterDamaged0232_S_NH_167.135529.png");
+    //label_map1.load("../../Label_maps_PNG/Moss0101_S/Moss0101_S_NH_298.431677.png");
 
+    ImageRGBu8 label_map2;
+    label_map2.load("../../Label_maps_PNG/PlasterDamaged0232_S/noise.png");
+
+    LabelMapSynthetiser<ImageRGBu8> synthe2;
     start_chrono = std::chrono::system_clock::now();
 
-    Bglam blab(label_map1);
-    Bglam blab2(label_map1);
+    Bglam blab(synthe2.transfoImg(label_map1),2);
+    elapsed_seconds = std::chrono::system_clock::now() - start_chrono;
+    std::cout << "bglam timing: 5x5 " << elapsed_seconds.count() << " s." << std::endl;
 
+    start_chrono = std::chrono::system_clock::now();
+    Bglam blab2(synthe2.transfoImg(label_map2),2);
+
+    elapsed_seconds = std::chrono::system_clock::now() - start_chrono;
+    std::cout << "bglam timing: 5x5 " << elapsed_seconds.count() << " s." << std::endl;
+
+    start_chrono = std::chrono::system_clock::now();
     std::cout << blab.distance(blab2) << std::endl;
 
     elapsed_seconds = std::chrono::system_clock::now() - start_chrono;
-    std::cout << "bglam timing: " << elapsed_seconds.count() << " s." << std::endl;
-
-    std::cout << blab << std::endl;
+    std::cout << "distance timing: " << elapsed_seconds.count() << " s." << std::endl;
 
 
     return EXIT_SUCCESS;
@@ -91,8 +109,9 @@ int main()
     unsigned int nb_color = h.binsNumber();
     h.saveFullHistogram("histo.txt");
     ImageRGBu8::PixelType p_mean = h.meanPixelType();
-    std::cout << nb << std::endl;*/
+    std::cout << nb_color << std::endl;*/
 
+    //return EXIT_SUCCESS;
     // substract the mean color from each RGB color channel
     int n = X.width()*X.height();
     itk::VariableSizeMatrix<float> D(3,n);
@@ -120,6 +139,7 @@ int main()
     C = D * D.GetTranspose();
 
     //perform SVD on C
+    vnl_svd<float>(C.GetVnlMatrix());
 
     //calculate T and T's inverse
     /*T = S.GetInverse() * U;

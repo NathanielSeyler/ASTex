@@ -31,6 +31,7 @@
 #include "itkImageFileWriter.h"
 #include "itkImageRegionIteratorWithIndex.h"
 #include "itkImportImageFilter.h"
+#include "itkImageRandomNonRepeatingIteratorWithIndex.h"
 
 #include <ASTex/internal.h>
 #include <ASTex/thread_pool.h>
@@ -347,8 +348,10 @@ public:
 	using ItkImg               = typename INHERIT::ItkImg;
 	using IteratorIndexed      = typename INHERIT::IteratorIndexed;
 	using Iterator             = typename INHERIT::Iterator;
+    using IteratorRandomNRIndexed = typename INHERIT::IteratorRandomNRIndexed;
 	using ConstIteratorIndexed = typename INHERIT::ConstIteratorIndexed ;
 	using ConstIterator        = typename INHERIT::ConstIterator;
+    using ConstIteratorRandomNRIndexed = typename INHERIT::ConstIteratorRandomNRIndexed;
 	using PixelType            = typename INHERIT::PixelType;
 	using DoublePixelEigen     = typename INHERIT::DoublePixelEigen;
 	using LongPixelEigen     = typename INHERIT::LongPixelEigen;
@@ -879,6 +882,19 @@ public:
 		return iter;
 	}
 
+    /**
+     * @brief create a region IteratorRandomNRIndexed (set to begin)
+     * @param reg the region on which iterate
+     * @return the iterator
+     */
+    NOT_CONST inline auto beginIteratorRandomNRIndexed(const Region & reg) -> RETURNED_TYPE(IteratorRandomNRIndexed)
+    {
+        IteratorRandomNRIndexed iter(this->itk_img_,reg);
+        iter.SetNumberOfSamples(reg.GetNumberOfPixels());
+        iter.GoToBegin();
+        return iter;
+    }
+
 	/**
 	 * @brief create a region IteratorIndexed (set to begin)
 	 * @param x x pos of begin of region
@@ -905,6 +921,18 @@ public:
 	   return beginIterator(gen_region(x,y,w,h));
 	}
 
+    /**
+     * @brief create a region IteratorRandomNRIndexed (set to begin)
+     * @param x x pos of begin of region
+     * @param y y pos of begin of region
+     * @param w width of region
+     * @param h height of region
+     * @return the iterator
+     */
+    NOT_CONST inline auto beginIteratorRandomNRIndexed(int x, int y, int w, int h) -> RETURNED_TYPE(IteratorRandomNRIndexed)
+    {
+       return beginIteratorRandomNRIndexed(gen_region(x,y,w,h));
+    }
 
 	/**
 	 * @brief create a image IteratorIndexed (set to begin)
@@ -929,6 +957,18 @@ public:
 		return iter;
 	}
 
+    /**
+     * @brief create a image IteratorRandomNRIndexed (set to begin)
+     * @return the iterator
+     */
+    NOT_CONST inline auto beginIteratorRandomNRIndexed() -> RETURNED_TYPE(IteratorRandomNRIndexed)
+    {
+        auto reg = this->itk_img_->GetBufferedRegion();
+        IteratorRandomNRIndexed iter( this->itk_img_, reg );
+        iter.SetNumberOfSamples(reg.GetNumberOfPixels());
+        iter.GoToBegin();
+        return iter;
+    }
 
 	/**
 	 * @brief create a region Iterator (set to end)
@@ -989,6 +1029,14 @@ public:
 		return iter;
 	}
 
+    inline ConstIteratorRandomNRIndexed beginConstIteratorRandomNRIndexed(const Region& reg) const
+    {
+        ConstIteratorRandomNRIndexed iter( this->itk_img_, reg );
+        iter.SetNumberOfSamples(reg.GetNumberOfPixels());
+        iter.GoToBegin();
+        return iter;
+    }
+
 	inline ConstIteratorIndexed beginConstIteratorIndexed(int x, int y, int w, int h) const
 	{
 		return beginConstIteratorIndexed(gen_region(x,y,w,h));
@@ -998,6 +1046,11 @@ public:
 	{
 		return beginConstIterator(gen_region(x,y,w,h));
 	}
+
+    inline ConstIteratorRandomNRIndexed beginConstIteratorRandomNRIndexed(int x, int y, int w, int h) const
+    {
+        return beginConstIteratorRandomNRIndexed(gen_region(x,y,w,h));
+    }
 
 	inline ConstIteratorIndexed beginConstIteratorIndexed() const
 	{
@@ -1012,6 +1065,15 @@ public:
 		iter.GoToBegin();
 		return iter;
 	}
+
+    inline ConstIteratorRandomNRIndexed beginConstIteratorRandomNRIndexed() const
+    {
+        auto reg = this->itk_img_->GetBufferedRegion();
+        ConstIteratorRandomNRIndexed iter( this->itk_img_, reg );
+        iter.SetNumberOfSamples(reg.GetNumberOfPixels());
+        iter.GoToBegin();
+        return iter;
+    }
 
 
 	inline ConstIterator endConstIterator(const Region& reg) const
@@ -1108,7 +1170,32 @@ public:
 			}
 	}
 
+    /**
+     * traversal of all pixels randomly
+     * @param f fonction/lamba to apply with 1 param: PixelType p&
+     */
+    template <typename FUNC>
+    inline auto for_all_random_pixels(const FUNC& f) ->  typename std::enable_if<!CST && function_traits<FUNC>::arity==1, void>::type
+    {
+        for (auto it = this->beginIteratorRandomNRIndexed(); !it.IsAtEnd(); ++it)
+            f(it.Value());
+    }
 
+    /**
+     * traversal of all pixels randomly
+     * @param f fonction/lamba to apply with 3 params: PixelType p&, int x, int y
+     */
+    template <typename FUNC>
+    inline auto for_all_random_pixels(const FUNC& f) -> typename std::enable_if<!CST && function_traits<FUNC>::arity==3, void>::type
+    {
+        for (auto it = this->beginIteratorRandomNRIndexed(); !it.IsAtEnd(); ++it)
+        {
+            auto ind = it.GetIndex();
+            int x = ind[0];
+            int y = ind[1];
+            f(it.Value(), x, y);
+        }
+    }
 
 	/**
 	 * traversal of region

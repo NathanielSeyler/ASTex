@@ -31,17 +31,63 @@ const std::vector<itk::VariableSizeMatrix<int>> Bglam::getBglams() const {return
 
 ImageGrayu8 Bglam::getImage() {return img;}
 
-ImageGrayu8 Bglam::getRandImage()
+ImageGrayu8 Bglam::getRandImage(const int &w,const int&h)
 {
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_int_distribution<> dis(0,nb_gray_level-1);
     ImageGrayu8 r;
-    r.initItk(64,64);
+    r.initItk(w,h);
     r.for_all_pixels([&] (ImageGrayu8::PixelType &p) {
        p = dis(gen);
     });
     return r;
+}
+
+void Bglam::resolutionUp()
+{
+    ImageGrayu8 i;
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<> disGraylevel(0,nb_gray_level-1);
+    std::uniform_int_distribution<> disNeighbors(4,5);
+    i.initItk(2*img.width(),2*img.height());
+    img.for_all_pixels([&](const ImageGrayu8::PixelType &p,const int &x,const int &y){
+        switch (disNeighbors(gen)) {
+        case 0:
+            i.pixelAbsolute(2*x,2*y) = disGraylevel(gen);
+            i.pixelAbsolute(2*x+1,2*y) = p;
+            i.pixelAbsolute(2*x,2*y+1) = p;
+            i.pixelAbsolute(2*x+1,2*y+1) = p;
+            break;
+        case 1:
+            i.pixelAbsolute(2*x,2*y) = p;
+            i.pixelAbsolute(2*x+1,2*y) = disGraylevel(gen);
+            i.pixelAbsolute(2*x,2*y+1) = p;
+            i.pixelAbsolute(2*x+1,2*y+1) = p;
+            break;
+        case 2:
+            i.pixelAbsolute(2*x,2*y) = p;
+            i.pixelAbsolute(2*x+1,2*y) = p;
+            i.pixelAbsolute(2*x,2*y+1) = disGraylevel(gen);
+            i.pixelAbsolute(2*x+1,2*y+1) = p;
+            break;
+        case 3:
+            i.pixelAbsolute(2*x,2*y) = p;
+            i.pixelAbsolute(2*x+1,2*y) = p;
+            i.pixelAbsolute(2*x,2*y+1) = p;
+            i.pixelAbsolute(2*x+1,2*y+1) = disGraylevel(gen);
+            break;
+        default:
+            i.pixelAbsolute(2*x,2*y) = p;
+            i.pixelAbsolute(2*x+1,2*y) = p;
+            i.pixelAbsolute(2*x,2*y+1) = p;
+            i.pixelAbsolute(2*x+1,2*y+1) = p;
+            break;
+        }
+    });
+    img = i;
+    compute();
 }
 
 void Bglam::nbGray()
@@ -82,9 +128,9 @@ std::vector<int> Bglam::getWindow(const int &x, const int &y)
 void Bglam::compute()
 {
     bglams.clear();
-    std::cout << nb_gray_level << "x" << nb_gray_level << std::endl;
     int window = 1 + 2*ring;
     int nb_matrix = window * window - 1 ;
+    std::cout << nb_matrix << " matrices " << nb_gray_level << "x" << nb_gray_level << std::endl;
     for(int i=0;i<nb_matrix;i++)
     {
         itk::VariableSizeMatrix<int> bglam(nb_gray_level,nb_gray_level);
@@ -126,7 +172,7 @@ double Bglam::distance(const Bglam &a)
     double distance = 0;
     unsigned int nb_matrix = (1+2*ring) * (1+2*ring) - 1;
     unsigned int cols = bglams[0].Cols();
-    itk::VariableSizeMatrix<float> m;
+    itk::VariableSizeMatrix<float> m(cols,cols);
     for(unsigned int i =0;i<nb_matrix;i++)
     {
         m = normalize(bglams[i]) - normalize(a.getBglams()[i]);
@@ -172,7 +218,7 @@ void Bglam::updatePixel(ImageGrayu8::PixelType &p, const int &x, const int &y)
 {
     ImageGrayu8::PixelType old = img.pixelAbsolute(x,y);
     img.pixelAbsolute(x,y) = p;
-    ImageGrayu8::PixelType g;
+    /*ImageGrayu8::PixelType g;
 
     int window = 1 + 2*ring;
     int compteur = 0;
@@ -191,6 +237,19 @@ void Bglam::updatePixel(ImageGrayu8::PixelType &p, const int &x, const int &y)
                 }
                 compteur++;
             }
+        }
+    }*/
+    int twindow = 1 + 2*ring;
+    int nb_neighbors = twindow * twindow - 1 ;
+    auto window = getWindow(x,y);
+    int g;
+    for(int i =0;i<nb_neighbors;i++)
+    {
+        g = window[i];
+        if(g>=0)
+        {
+            bglams[i][p][g]++;
+            bglams[i][old][g]--;
         }
     }
 

@@ -25,7 +25,8 @@ public:
     std::vector<itk::VariableSizeMatrix<int>> getBglams();
     const std::vector<itk::VariableSizeMatrix<int>> getBglams() const;
     ImageGrayu8 getImage();
-    ImageGrayu8 getRandImage();
+    ImageGrayu8 getRandImage(const int &w, const int &h);
+    void resolutionUp();
     std::vector<int> getWindow(const int &,const int &);
     double distance(const Bglam &);
     friend std::ostream& operator<<(std::ostream&, const Bglam &);

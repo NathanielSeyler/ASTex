@@ -57,7 +57,7 @@ int main()
 
     LabelMapSynthetiser<ImageGrayu8> synthe;
     Bglam bglams(synthe.transfoImg(img),2);
-    ImageGrayu8 img2 = bglams.getRandImage();
+    ImageGrayu8 img2 = bglams.getRandImage(5,5);
     img2 = synthe.transfoImgBack(img2);
     img2.save("img_random.png");
     Bglam bglams2(synthe.transfoImg(img2),2);

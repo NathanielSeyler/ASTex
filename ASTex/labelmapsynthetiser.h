@@ -82,16 +82,18 @@ private:
 
     ImageGrayu8::PixelType aura2DSampling(const ImageGrayu8::PixelType &p, const int &x,const int &y,const float &d)
     {
+        Bglam test = bglam_out;
         std::vector<ImageGrayu8::PixelType> C;
         for(int j = 0; j< nb_gray_level ; j++)
         {
             if(j!=p)
             {
                 ImageGrayu8::PixelType pj = ImageGrayu8::itkPixel(j);
-                bglam_out.updatePixel(pj,x,y);
-                float dj = bglam_in.distance(bglam_out);
+                test.updatePixel(pj,x,y);
+                float dj = bglam_in.distance(test);
+                //test.updatePixel(p,x,y);
                 if(dj < d)
-                    C.emplace_back(j);
+                    C.emplace_back(pj);
             }
         }
         if(C.empty())
@@ -107,22 +109,27 @@ private:
 
     void compute()
     {
-        float epsilon = 0.1;
+        float epsilon = 0;
         float d;
         ImageGrayu8 Y = bglam_out.getImage();
-        int nb_modif = 1;
+        int nb_modif = -1;
         while( (d = bglam_in.distance(bglam_out)) > epsilon && nb_modif != 0)
         {
-            //std::cout << d << "\t";
+            std::cout << d << "\t";
             nb_modif = 0;
             Y.for_all_random_pixels([&] (ImageGrayu8::PixelType p,const int &x,const int &y){
                 ImageGrayu8::PixelType np = aura2DSampling(p,x,y,d);
+                /*if(np!=p)
+                {
+                    nb_modif++;
+                    bglam_out.updatePixel(np,x,y);
+                }*/
                 if(np!=p)
                     nb_modif++;
                 bglam_out.updatePixel(np,x,y);
-                //d = bglam_in.distance(bglam_out);
+                d = bglam_in.distance(bglam_out);
             });
-            //std::cout << nb_modif << std::endl;
+            std::cout << nb_modif << std::endl;
         }
         std::cout << d << "\t";
         std::cout << nb_modif << std::endl;

@@ -214,7 +214,7 @@ std::ostream& operator<<(std::ostream& out, const Bglam & b){
     return out;
 }
 
-void Bglam::updatePixel(ImageGrayu8::PixelType &p, const int &x, const int &y)
+void Bglam::updatePixel(const ImageGrayu8::PixelType &p, const int &x, const int &y)
 {
     ImageGrayu8::PixelType old = img.pixelAbsolute(x,y);
     img.pixelAbsolute(x,y) = p;
@@ -243,13 +243,20 @@ void Bglam::updatePixel(ImageGrayu8::PixelType &p, const int &x, const int &y)
     int nb_neighbors = twindow * twindow - 1 ;
     auto window = getWindow(x,y);
     int g;
+    int g2;
     for(int i =0;i<nb_neighbors;i++)
     {
         g = window[i];
+        g2 = window[nb_neighbors-1-i];
         if(g>=0)
         {
             bglams[i][p][g]++;
             bglams[i][old][g]--;
+        }
+        if(g2>=0)
+        {
+            bglams[i][g2][p]++;
+            bglams[i][g2][old]--;
         }
     }
 

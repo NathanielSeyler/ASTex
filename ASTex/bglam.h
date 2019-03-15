@@ -30,7 +30,7 @@ public:
     std::vector<int> getWindow(const int &,const int &);
     double distance(const Bglam &);
     friend std::ostream& operator<<(std::ostream&, const Bglam &);
-    void updatePixel(ImageGrayu8::PixelType &,const int &,const int &);
+    void updatePixel(const ImageGrayu8::PixelType &,const int &,const int &);
 };
 
 }

@@ -1,5 +1,6 @@
 #include "bglam.h"
 #include <random>
+//#include <itpp/signal/fastica.h>
 
 namespace ASTex {
 
@@ -130,7 +131,7 @@ void Bglam::compute()
     bglams.clear();
     int window = 1 + 2*ring;
     int nb_matrix = window * window - 1 ;
-    std::cout << nb_matrix << " matrices " << nb_gray_level << "x" << nb_gray_level << std::endl;
+    //std::cout << nb_matrix << " matrices " << nb_gray_level << "x" << nb_gray_level << std::endl;
     for(int i=0;i<nb_matrix;i++)
     {
         itk::VariableSizeMatrix<int> bglam(nb_gray_level,nb_gray_level);
@@ -185,15 +186,6 @@ double Bglam::distance(const Bglam &a)
     return distance / nb_matrix;
 }
 
-int Bglam::norm(const itk::VariableSizeMatrix<int> &m)
-{
-    int r =0;
-    for(unsigned int i = 0; i < m.Rows();i++)
-        for(unsigned int j=0; j < m.Cols();j++)
-            r+=m[i][j];
-    return r;
-}
-
 itk::VariableSizeMatrix<float> Bglam::normalize(const itk::VariableSizeMatrix<int> &m)
 {
     int n = norm(m);
@@ -201,6 +193,7 @@ itk::VariableSizeMatrix<float> Bglam::normalize(const itk::VariableSizeMatrix<in
     for(unsigned int i =0;i<r.Rows();i++)
         for(unsigned int j=0;j<r.Cols();j++)
             r[i][j] = float(m[i][j])/float(n);
+    //std::cout << norm(r) << std::endl;
     return r;
 }
 
@@ -219,6 +212,7 @@ void Bglam::updatePixel(const ImageGrayu8::PixelType &p, const int &x, const int
     ImageGrayu8::PixelType old = img.pixelAbsolute(x,y);
     img.pixelAbsolute(x,y) = p;
     /*ImageGrayu8::PixelType g;
+    ImageGrayu8::PixelType g2;
 
     int window = 1 + 2*ring;
     int compteur = 0;
@@ -234,6 +228,13 @@ void Bglam::updatePixel(const ImageGrayu8::PixelType &p, const int &x, const int
                     g = img.pixelAbsolute(x-ring+j,y-ring+i);
                     bglams[compteur][p][g]++;
                     bglams[compteur][old][g]--;
+                }
+                if( x+ring-j >=0 && x+ring-j < img.width()
+                        && y+ring-i >=0 && y+ring-i < img.height())
+                {
+                    g2 = img.pixelAbsolute(x+ring-j,y+ring-i);
+                    bglams[compteur][g2][p]++;
+                    bglams[compteur][g2][old]--;
                 }
                 compteur++;
             }
@@ -260,6 +261,14 @@ void Bglam::updatePixel(const ImageGrayu8::PixelType &p, const int &x, const int
         }
     }
 
+}
+
+Bglam Bglam::clone()
+{
+    ImageGrayu8 i;
+    i.initItk(img.width(),img.height());
+    i.copy_pixels(img);
+    return Bglam(i);
 }
 
 }

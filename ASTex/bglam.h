@@ -14,7 +14,15 @@ private:
     int nb_gray_level;
     void nbGray();
     void compute();
-    int norm(const itk::VariableSizeMatrix<int> &);
+    template<typename T>
+    T norm(const itk::VariableSizeMatrix<T> &m)
+    {
+        T r(0);
+        for(unsigned int i = 0; i < m.Rows();i++)
+            for(unsigned int j=0; j < m.Cols();j++)
+                r+=m[i][j];
+        return r;
+    }
     itk::VariableSizeMatrix<float> normalize(const itk::VariableSizeMatrix<int>&);
 public:
     Bglam();
@@ -31,6 +39,7 @@ public:
     double distance(const Bglam &);
     friend std::ostream& operator<<(std::ostream&, const Bglam &);
     void updatePixel(const ImageGrayu8::PixelType &,const int &,const int &);
+    Bglam clone();
 };
 
 }

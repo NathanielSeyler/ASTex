@@ -49,6 +49,7 @@ private:
     int nb_gray_level;
     Bglam bglam_in;
     Bglam bglam_out;
+    float epsilon;
 
     void computeConfigs()
     {
@@ -106,13 +107,13 @@ private:
         }
     }
 
-    void compute(const float &epsilon)
+    float compute(const float &epsilon)
     {
         float d;
         int nb_modif = -1;
         while( (d = bglam_in.distance(bglam_out)) > epsilon && nb_modif != 0)
         {
-            std::cout << d << "\t";
+            //std::cout << d << "\t";
             nb_modif = 0;
             bglam_out.getImage().for_all_random_pixels([&] (ImageGrayu8::PixelType p,const int &x,const int &y){
                 ImageGrayu8::PixelType np = aura2DSampling(p,x,y,d);
@@ -120,49 +121,64 @@ private:
                 {
                     nb_modif++;
                     bglam_out.updatePixel(np,x,y);
+                    d = bglam_in.distance(bglam_out);
                 }
-                /*if(np!=p)
-                    nb_modif++;
-                bglam_out.updatePixel(np,x,y);*/
-                d = bglam_in.distance(bglam_out);
             });
-            std::cout << nb_modif << std::endl;
+            //std::cout << nb_modif << std::endl;
         }
         std::cout << d << "\t";
         std::cout << nb_modif << std::endl;
+
+        return d;
     }
 
 public:
     LabelMapSynthetiser() : colors(0),nb_gray_level(0) {}
 
-    LabelMapSynthetiser(const IMG &i,const int &r) : colors(0),
+    LabelMapSynthetiser(const IMG &i,const int &r,const float &e) :
+        colors(0),
         bglam_in(transfoImg(i),r,nb_gray_level),
         bglam_out(bglam_in.getRandImage(bglam_in.getImage().width()/8,
-                                        bglam_in.getImage().height()/8),r,nb_gray_level)
+                                        bglam_in.getImage().height()/8),r,nb_gray_level),
+        epsilon(e)
     {
-        float epsilon = 0;
         computeConfigs();
-        compute(epsilon);
+        epsilon = compute(epsilon)/2;
+        std::cerr << epsilon << std::endl;
         transfoImgBack(bglam_out.getImage()).save("out.png");
         computeErrorMap().save("error_map.png");
 
         bglam_out.resolutionUp();
-        compute(epsilon);
+        std::cerr << bglam_in.distance(bglam_out);
+        epsilon = compute(epsilon)/2;
         transfoImgBack(bglam_out.getImage()).save("out_x2.png");
         computeErrorMap().save("error_x2_map.png");
 
         bglam_out.resolutionUp();
-        compute(epsilon);
+        epsilon = compute(epsilon)/2;
         transfoImgBack(bglam_out.getImage()).save("out_x4.png");
         computeErrorMap().save("error_x4_map.png");
 
         bglam_out.resolutionUp();
-        compute(epsilon);
+        epsilon = compute(epsilon);
         transfoImgBack(bglam_out.getImage()).save("out_x8.png");
         computeErrorMap().save("error_x8_map.png");
     }
 
-    LabelMapSynthetiser(const IMG &i) : LabelMapSynthetiser(i,1) {}
+    LabelMapSynthetiser(const IMG &i) : LabelMapSynthetiser(i,1,0) {}
+
+    LabelMapSynthetiser(const IMG &i,const IMG &o,const int &r,const float &e):
+        colors(0),
+        bglam_in(transfoImg(i),r,nb_gray_level),
+        bglam_out(transfoImg(o),r,nb_gray_level),
+        epsilon(e)
+    {
+        computeConfigs();
+        compute(epsilon);
+        transfoImgBack(bglam_out.getImage()).save("out.png");
+        computeErrorMap().save("error_map.png");
+    }
+
 
     ImageGrayu8 transfoImg(const IMG &i)
     {

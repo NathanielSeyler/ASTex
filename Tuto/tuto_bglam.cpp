@@ -6,7 +6,6 @@
 #include <ASTex/labelmapsynthetiser.h>
 #include <itkMatrix.h>
 #include <itkVariableSizeMatrix.h>
-#include <set>
 
 using namespace ASTex;
 //typedef RGB<unsigned char> RGBType;
@@ -17,7 +16,18 @@ int main()
     label_map3.load("../../Label_maps_PNG/PlasterDamaged0232_S/PlasterDamaged0232_S_NH_167.135529.png");
 
     auto start_chrono = std::chrono::system_clock::now();
-    LabelMapSynthetiser<ImageRGBu8> s(label_map3);
+    Size rad = {{2,2}};
+    /*std::vector<bool> croix;
+    croix.push_back(false);
+    croix.push_back(true);
+    croix.push_back(false);
+    croix.push_back(true);
+    croix.push_back(true);
+    croix.push_back(false);
+    croix.push_back(true);
+    croix.push_back(false);
+    assert(croix.size() == ((1+2*rad[0]) * (1+2*rad[1]) -1) );*/
+    LabelMapSynthetiser<ImageRGBu8> s(label_map3,rad,0);
     std::chrono::duration<double> elapsed_seconds = std::chrono::system_clock::now() - start_chrono;
     std::cout << "synthe timing: " << elapsed_seconds.count() << " s." << std::endl;
 
@@ -56,12 +66,20 @@ int main()
     start_chrono = std::chrono::system_clock::now();
 
     LabelMapSynthetiser<ImageGrayu8> synthe;
-    Bglam bglams(synthe.transfoImg(img),2);
+    Bglam bglams(synthe.transfoImg(img));
+
+    //std::cout << bglams << std::endl;
+
+    elapsed_seconds = std::chrono::system_clock::now() - start_chrono;
+    std::cout << "bglam timing: " << elapsed_seconds.count() << " s." << std::endl;
+
+    //return EXIT_SUCCESS;
+
     ImageGrayu8 img2 = bglams.getRandImage(5,5);
     img2 = synthe.transfoImgBack(img2);
     img2.save("img_random.png");
-    Bglam bglams2(synthe.transfoImg(img2),2);
-    Bglam bglams3(synthe.transfoImg(img3),2);
+    Bglam bglams2(synthe.transfoImg(img2),{{2,2}});
+    Bglam bglams3(synthe.transfoImg(img3),{{2,2}});
     std::cout << "distance img1 et img2 : " << bglams.distance(bglams2) << std::endl;
     std::cout << "distance img1 et img3 : " << bglams.distance(bglams3) << std::endl;
 
@@ -83,12 +101,12 @@ int main()
     LabelMapSynthetiser<ImageRGBu8> synthe2;
     start_chrono = std::chrono::system_clock::now();
 
-    Bglam blab(synthe2.transfoImg(label_map1),2);
+    Bglam blab(synthe2.transfoImg(label_map1));
     elapsed_seconds = std::chrono::system_clock::now() - start_chrono;
     std::cout << "bglam timing: 5x5 " << elapsed_seconds.count() << " s." << std::endl;
 
     start_chrono = std::chrono::system_clock::now();
-    Bglam blab2(synthe2.transfoImg(label_map2),2);
+    Bglam blab2(synthe2.transfoImg(label_map2));
 
     elapsed_seconds = std::chrono::system_clock::now() - start_chrono;
     std::cout << "bglam timing: 5x5 " << elapsed_seconds.count() << " s." << std::endl;

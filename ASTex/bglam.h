@@ -9,9 +9,12 @@ class Bglam
 {
 private:
     ImageGrayu8 img;
-    std::vector<itk::VariableSizeMatrix<int>> bglams;
-    int ring;
     int nb_gray_level;
+    Size radius;
+    std::vector<bool> structuring_element;
+    unsigned int nb_matrix;
+    std::vector<itk::VariableSizeMatrix<int>> bglams;
+    //std::vector<Offset> offsets;
     void nbGray();
     void compute();
     template<typename T>
@@ -26,12 +29,15 @@ private:
     itk::VariableSizeMatrix<float> normalize(const itk::VariableSizeMatrix<int>&);
 public:
     Bglam();
+    //Bglam(const int &);
     Bglam(const ImageGrayu8 &);
-    Bglam(const ImageGrayu8 &,const int &);
-    Bglam(const ImageGrayu8 &,const int &,const int &);
+    Bglam(const ImageGrayu8 &,const Size &);
+    Bglam(const ImageGrayu8 &,const Size &,const int &);
+    Bglam(const ImageGrayu8 &,const Size &,const int &,const std::vector<bool>&);
     ~Bglam();
     std::vector<itk::VariableSizeMatrix<int>> getBglams();
     const std::vector<itk::VariableSizeMatrix<int>> getBglams() const;
+    void setBglams(std::vector<itk::VariableSizeMatrix<int>>);
     ImageGrayu8 getImage();
     ImageGrayu8 getRandImage(const int &w, const int &h);
     void resolutionUp();
@@ -39,6 +45,7 @@ public:
     double distance(const Bglam &);
     friend std::ostream& operator<<(std::ostream&, const Bglam &);
     void updatePixel(const ImageGrayu8::PixelType &,const int &,const int &);
+    void updateBglams(const ImageGrayu8::PixelType &,const ImageGrayu8::PixelType &,std::vector<int> &);
     Bglam clone();
 };
 

@@ -7,20 +7,40 @@ namespace ASTex {
 
 Bglam::Bglam(){}
 
-Bglam::Bglam(const ImageGrayu8 &i) : img(i), bglams(0), ring(1)
+//Bglam::Bglam(const int &r) : img(nullptr),bglams(0),ring(r),nb_gray_level(0) {}
+
+Bglam::Bglam(const ImageGrayu8 &i) : img(i),nb_matrix(8), bglams(0)
 {
     nbGray();
+    radius = {{1,1}};
+    for(int i = 0; i < 8;i++)
+        structuring_element.push_back(true);
     compute();
 }
 
-Bglam::Bglam(const ImageGrayu8 &i,const int &r) : img(i), bglams(0), ring(r)
+Bglam::Bglam(const ImageGrayu8 &i, const Size &r) : img(i),radius(r),structuring_element(0), bglams(0)
 {
     nbGray();
+    nb_matrix = (1+2*radius[0]) * (1+2*radius[1]) -1;
+    for(unsigned int i = 0; i < nb_matrix;i++)
+        structuring_element.push_back(true);
     compute();
 }
 
-Bglam::Bglam(const ImageGrayu8 &i,const int &r,const int &n) : img(i), bglams(0), ring(r), nb_gray_level(n)
+Bglam::Bglam(const ImageGrayu8 &i, const Size &r, const int &n) : img(i), nb_gray_level(n), radius(r), bglams(0)
 {
+    nb_matrix = (1+2*radius[0]) * (1+2*radius[1]) -1;
+    for(unsigned int i = 0; i < nb_matrix;i++)
+        structuring_element.push_back(true);
+    compute();
+}
+
+Bglam::Bglam(const ImageGrayu8 &i, const Size &r, const int &n, const std::vector<bool> &se) : img(i), nb_gray_level(n), radius(r),structuring_element(se), bglams(0)
+{
+    nb_matrix = 0;
+    for(auto e : structuring_element)
+        if(e)
+            nb_matrix++;
     compute();
 }
 
@@ -29,6 +49,8 @@ Bglam::~Bglam(){}
 std::vector<itk::VariableSizeMatrix<int>> Bglam::getBglams() {return bglams;}
 
 const std::vector<itk::VariableSizeMatrix<int>> Bglam::getBglams() const {return bglams;}
+
+void Bglam::setBglams(std::vector<itk::VariableSizeMatrix<int>> b) {bglams =b;}
 
 ImageGrayu8 Bglam::getImage() {return img;}
 
@@ -103,23 +125,30 @@ void Bglam::nbGray()
 
 std::vector<int> Bglam::getWindow(const int &x, const int &y)
 {
-    int tWindow = 1 + 2*ring;
+    int rx(radius[0]);
+    int ry(radius[1]);
+    int tWindow_w = 1 + 2 * rx;
+    int tWindow_h = 1 + 2 * ry;
     std::vector<int> window;
 
-    for(int i= 0;i<tWindow;i++)
+    int compteur = 0;
+    for(int i= 0;i<tWindow_h;i++)
     {
-        for(int j=0;j<tWindow;j++)
+        for(int j=0;j<tWindow_w;j++)
         {
-            if(!(x-ring+j==x && y-ring+i==y))
+            if(!(x-rx+j==x && y-ry+i==y))
             {
-                if( x-ring+j >=0 && x-ring+j < img.width()
-                        && y-ring+i >=0 && y-ring+i < img.height())
+                if(structuring_element[compteur++])
                 {
-                    ImageGrayu8::PixelType g = img.pixelAbsolute(x-ring+j,y-ring+i);
-                    window.emplace_back(g);
+                    if( x-rx+j >=0 && x-rx+j < img.width()
+                            && y-ry+i >=0 && y-ry+i < img.height())
+                    {
+                        ImageGrayu8::PixelType g = img.pixelAbsolute(x-rx+j,y-ry+i);
+                        window.emplace_back(g);
+                    }
+                    else
+                        window.emplace_back(-1);
                 }
-                else
-                    window.emplace_back(-1);
             }
         }
     }
@@ -129,16 +158,14 @@ std::vector<int> Bglam::getWindow(const int &x, const int &y)
 void Bglam::compute()
 {
     bglams.clear();
-    int window = 1 + 2*ring;
-    int nb_matrix = window * window - 1 ;
-    //std::cout << nb_matrix << " matrices " << nb_gray_level << "x" << nb_gray_level << std::endl;
-    for(int i=0;i<nb_matrix;i++)
+    std::cout << nb_matrix << " matrices " << nb_gray_level << "x" << nb_gray_level << std::endl;
+    for(unsigned int i=0;i<nb_matrix;i++)
     {
         itk::VariableSizeMatrix<int> bglam(nb_gray_level,nb_gray_level);
         bglam.Fill(0);
         bglams.emplace_back(bglam);
     }
-    img.for_all_pixels([&] (ImageGrayu8::PixelType &p,int &x,int &y){
+    img.for_all_pixels([&] (const ImageGrayu8::PixelType &p,const int &x,const int &y){
         /*ImageGrayu8::PixelType g;
         int compteur = 0;
         for(int i= 0;i<window;i++)
@@ -159,19 +186,44 @@ void Bglam::compute()
         }*/
         int g;
         auto w = getWindow(x,y);
-        for(int i=0;i<nb_matrix;i++)
+        for(unsigned int i=0;i<nb_matrix;i++)
         {
             g = w[i];
             if(g >= 0)
                 bglams[i][p][g]++;
         }
     });
+    /*img.for_all_pixels_structuring_element(radius,[&](const ImageGrayu8::PixelType &p,
+                                           const ConstShapedNeighborhoodIterator n)
+    {
+        for(int i =0 ; i <n.GetActiveIndexListSize();i++)
+        {
+            int g = n.Get();
+            if( g>=0)
+                bglams[i][p][g]++;
+
+        }
+    });*/
+    /*std::mutex mutex;
+    img.parallel_for_all_pixels([&] (const ImageGrayu8::PixelType &p,int x, int y){
+        int g;
+        auto w = getWindow(x,y);
+        for(int i=0;i<nb_matrix;i++)
+        {
+            g = w[i];
+            if(g >= 0)
+            {
+                mutex.lock();
+                bglams[i][p][g]++;
+                mutex.unlock();
+            }
+        }
+    });*/
 }
 
 double Bglam::distance(const Bglam &a)
 {
     double distance = 0;
-    unsigned int nb_matrix = (1+2*ring) * (1+2*ring) - 1;
     unsigned int cols = bglams[0].Cols();
     itk::VariableSizeMatrix<float> m(cols,cols);
     for(unsigned int i =0;i<nb_matrix;i++)
@@ -209,46 +261,21 @@ std::ostream& operator<<(std::ostream& out, const Bglam & b){
 
 void Bglam::updatePixel(const ImageGrayu8::PixelType &p, const int &x, const int &y)
 {
-    ImageGrayu8::PixelType old = img.pixelAbsolute(x,y);
+    auto old = img.pixelAbsolute(x,y);
     img.pixelAbsolute(x,y) = p;
-    /*ImageGrayu8::PixelType g;
-    ImageGrayu8::PixelType g2;
-
-    int window = 1 + 2*ring;
-    int compteur = 0;
-    for(int i= 0;i<window;i++)
-    {
-        for(int j=0;j<window;j++)
-        {
-            if(!(x-ring+j==x && y-ring+i==y))
-            {
-                if( x-ring+j >=0 && x-ring+j < img.width()
-                        && y-ring+i >=0 && y-ring+i < img.height())
-                {
-                    g = img.pixelAbsolute(x-ring+j,y-ring+i);
-                    bglams[compteur][p][g]++;
-                    bglams[compteur][old][g]--;
-                }
-                if( x+ring-j >=0 && x+ring-j < img.width()
-                        && y+ring-i >=0 && y+ring-i < img.height())
-                {
-                    g2 = img.pixelAbsolute(x+ring-j,y+ring-i);
-                    bglams[compteur][g2][p]++;
-                    bglams[compteur][g2][old]--;
-                }
-                compteur++;
-            }
-        }
-    }*/
-    int twindow = 1 + 2*ring;
-    int nb_neighbors = twindow * twindow - 1 ;
     auto window = getWindow(x,y);
+    updateBglams(old,p,window);
+
+}
+
+void Bglam::updateBglams(const ImageGrayu8::PixelType &old, const ImageGrayu8::PixelType &p, std::vector<int> &window)
+{
     int g;
     int g2;
-    for(int i =0;i<nb_neighbors;i++)
+    for(unsigned int i =0;i<nb_matrix;i++)
     {
         g = window[i];
-        g2 = window[nb_neighbors-1-i];
+        g2 = window[nb_matrix-1-i];
         if(g>=0)
         {
             bglams[i][p][g]++;
@@ -263,12 +290,11 @@ void Bglam::updatePixel(const ImageGrayu8::PixelType &p, const int &x, const int
 
 }
 
-Bglam Bglam::clone()
+/*Bglam Bglam::clone()
 {
-    ImageGrayu8 i;
-    i.initItk(img.width(),img.height());
-    i.copy_pixels(img);
-    return Bglam(i);
-}
+   Bglam b(ring);
+   b.setBglams(bglams);
+   return b;
+}*/
 
 }

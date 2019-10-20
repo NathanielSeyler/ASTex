@@ -90,11 +90,9 @@ ImageRGBu8 pavage_bruit(ImageRGBu8 in,int r)
        float p2y = p0y + 1;
 
        float cp = (p2y - p1y) * (tx - p1x) - (p2x - p1x) * (ty - p1y);
-       if(cp < 0)
-           p = ImageRGBu8::itkPixel(255,0,0);
-       else
+
+       if(cp >= 0)
        {
-           p = ImageRGBu8::itkPixel(0,0,255);
            p0x = p1x;
            p0y = p2y;
        }
@@ -177,11 +175,9 @@ ImageGrayu8 pavage_bruit(ImageGrayu8 in,int r)
        float p2y = p0y + 1;
 
        float cp = (p2y - p1y) * (tx - p1x) - (p2x - p1x) * (ty - p1y);
-       if(cp < 0)
-           p = ImageGrayu8::itkPixel(255);
-       else
+
+       if(cp >= 0)
        {
-           p = ImageGrayu8::itkPixel(0);
            p0x = p1x;
            p0y = p2y;
        }

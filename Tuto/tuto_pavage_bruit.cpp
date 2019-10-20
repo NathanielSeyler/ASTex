@@ -1,5 +1,6 @@
 #include <ASTex/image_rgb.h>
 #include <ASTex/image_gray.h>
+#include <ASTex/histogram.h>
 #include <cmath>
 
 using namespace ASTex;
@@ -240,9 +241,34 @@ ImageGrayu8 pavage_bruit(ImageGrayu8 in,int r)
 
 int main()
 {
+    //int r = 500;
+
     ImageGrayu8 in;
-    in.load("../../tex.jpeg");
-    ImageGrayu8 out = pavage_bruit(in,100);
-    out.save("img4.png");
+    in.load("../../textures/tex.jpeg");
+    //HistogramGrayu8 h(in);
+    //h.saveFullHistogram("h_in");
+    ImageGrayu8 out = pavage_bruit(in,in.width()/2);
+    out.save("out.png");
+    //HistogramGrayu8 ho(out);
+    //ho.saveFullHistogram("h_out");
+
+    ImageRGBu8 in2;
+    in2.load("../../textures/noise.png");
+    //HistogramRGBu8 h2(in2);
+    //h2.saveFullHistogram("h2_in");
+    ImageRGBu8 out2 = pavage_bruit(in2,in2.width()/2);
+    out2.save("out2.png");
+    //HistogramRGBu8 ho2(out2);
+    //ho2.saveFullHistogram("h2_out");
+
+    ImageRGBu8 in3;
+    in3.load("../../textures/Moss0101_S.png");
+    //HistogramRGBu8 h3(in3);
+    //h3.saveFullHistogram("h3_in");
+    ImageRGBu8 out3 = pavage_bruit(in3,in3.width()/2);
+    out3.save("out3.png");
+    //HistogramRGBu8 ho3(out3);
+    //ho3.saveFullHistogram("h3_out");
+
     return 0;
 }

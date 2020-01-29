@@ -148,10 +148,17 @@ public:
 		return EigenVector<S>(v,v,v);
 	}
 
-//	inline static DoublePixelEigen eigenDoublePixel(double v)
-//	{
-//		return DoublePixelEigen(v,v,v);
-//	}
+    inline static DoublePixelEigen eigenDoublePixel(const PixelType& p)
+    {
+        if (std::is_same<CHANNEL_TYPE, double>::value)
+            return *(reinterpret_cast<const DoublePixelEigen*>(&p));
+        return DoublePixelEigen(p[0],p[1],p[2]);
+    }
+
+    inline static DoublePixelEigen eigenDoublePixel(double v)
+    {
+        return DoublePixelEigen(v,v,v);
+    }
 
 
 	template<typename S>

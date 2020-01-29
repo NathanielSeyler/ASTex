@@ -14,9 +14,11 @@ int main()
 {
     ImageRGBu8 label_map3;
     label_map3.load("../../Label_maps_PNG/PlasterDamaged0232_S/PlasterDamaged0232_S_NH_167.135529.png");
+    ImageRGBu8 out;
+    out.load("../../initializations/Image4_92x92.png");
 
     auto start_chrono = std::chrono::system_clock::now();
-    Size rad = {{2,2}};
+    Size rad = {{1,1}};
     /*std::vector<bool> croix;
     croix.push_back(false);
     croix.push_back(true);
@@ -26,8 +28,10 @@ int main()
     croix.push_back(false);
     croix.push_back(true);
     croix.push_back(false);
-    assert(croix.size() == ((1+2*rad[0]) * (1+2*rad[1]) -1) );*/
-    LabelMapSynthetiser<ImageRGBu8> s(label_map3,rad,0);
+    assert(croix.size() == ((1+2*rad[0]) * (1+2*rad[1]) -1) );
+    //LabelMapSynthetiser<ImageRGBu8> s(label_map3,rad,croix);*/
+    LabelMapSynthetiser<ImageRGBu8> s(label_map3,out,rad);
+    s.synthUp(0.3,3);
     std::chrono::duration<double> elapsed_seconds = std::chrono::system_clock::now() - start_chrono;
     std::cout << "synthe timing: " << elapsed_seconds.count() << " s." << std::endl;
 

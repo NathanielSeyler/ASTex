@@ -49,9 +49,11 @@ public:
 	using IteratorIndexed =      itk::ImageRegionIteratorWithIndex<ItkImg>;
 	using Iterator =             itk::ImageRegionIterator<ItkImg>;
     using IteratorRandomNRIndexed = itk::ImageRandomNonRepeatingIteratorWithIndex<ItkImg>;
+    using ShapedNeighborhoodIterator =itk::ShapedNeighborhoodIterator<ItkImg,itk::ConstantBoundaryCondition<ItkImg>>;
 	using ConstIteratorIndexed = itk::ImageRegionConstIteratorWithIndex<ItkImg> ;
 	using ConstIterator =        itk::ImageRegionConstIterator<ItkImg>;
     using ConstIteratorRandomNRIndexed = itk::ImageRandomNonRepeatingConstIteratorWithIndex<ItkImg>;
+    using ConstShapedNeighborhoodIterator = itk::ConstShapedNeighborhoodIterator<ItkImg,itk::ConstantBoundaryCondition<ItkImg>>;
 	using DoublePixelEigen =     Eigen::Vector4d;
 	using LongPixelEigen =       Eigen::Matrix<int64_t,4,1>;
 	using DataType =             CHANNEL_TYPE;

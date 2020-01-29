@@ -49,7 +49,6 @@ private:
     int nb_gray_level;
     Bglam bglam_in;
     Bglam bglam_out;
-    float epsilon;
 
     void computeConfigs()
     {
@@ -132,100 +131,36 @@ private:
         return d;
     }
 
-    void call_fonctions()
-    {
-        computeConfigs();
-        compute(epsilon);
-        transfoImgBack(bglam_out.getImage()).save("out.png");
-        computeErrorMap().save("error_map.png");
-
-        bglam_out.resolutionUp();
-        epsilon /= 2;
-        compute(epsilon);
-        transfoImgBack(bglam_out.getImage()).save("out_x2.png");
-        computeErrorMap().save("error_x2_map.png");
-
-        bglam_out.resolutionUp();
-        epsilon /= 2;
-        compute(epsilon);
-        transfoImgBack(bglam_out.getImage()).save("out_x4.png");
-        computeErrorMap().save("error_x4_map.png");
-
-        bglam_out.resolutionUp();
-        epsilon /= 2;
-        compute(epsilon);
-        transfoImgBack(bglam_out.getImage()).save("out_x8.png");
-        computeErrorMap().save("error_x8_map.png");
-    }
-
 public:
     LabelMapSynthetiser() : colors(0),nb_gray_level(0) {}
 
-    LabelMapSynthetiser(const IMG &i,const Size &r,const float &e) :
+    LabelMapSynthetiser(const IMG &i,const Size &r,const int &w,const int &h) :
         colors(0),
         bglam_in(transfoImg(i),r,nb_gray_level),
-        bglam_out(bglam_in.getRandImage(bglam_in.getImage().width()/8,
-                                        bglam_in.getImage().height()/8),r,nb_gray_level),
-        epsilon(e)
+        bglam_out(bglam_in.getRandImage(w,h),r,nb_gray_level)
     {
-        call_fonctions();
     }
 
-    LabelMapSynthetiser(const IMG &i) :
-        LabelMapSynthetiser(i,{{1,1}},0) {}
-    LabelMapSynthetiser(const IMG &i,const Size &r) :
-        LabelMapSynthetiser(i,r,0) {}
-    LabelMapSynthetiser(const IMG &i,const float &e) :
-        LabelMapSynthetiser(i,{{1,1}},e) {}
-
-    LabelMapSynthetiser(const IMG &i,const IMG &o,const Size &r,const float &e):
+    LabelMapSynthetiser(const IMG &i,const IMG &o,const Size &r):
         colors(0),
         bglam_in(transfoImg(i),r,nb_gray_level),
-        bglam_out(transfoImg(o),r,nb_gray_level),
-        epsilon(e)
+        bglam_out(transfoImg(o),r,nb_gray_level)
     {
-        call_fonctions();
     }
 
-    LabelMapSynthetiser(const IMG &i,const IMG &o) :
-        LabelMapSynthetiser(i,o,{{1,1}},0) {}
-    LabelMapSynthetiser(const IMG &i,const IMG &o,const Size &r) :
-        LabelMapSynthetiser(i,o,r,0) {}
-    LabelMapSynthetiser(const IMG &i,const IMG &o,const float &e) :
-        LabelMapSynthetiser(i,o,{{1,1}},e) {}
-
-    LabelMapSynthetiser(const IMG &i,const Size &r,const float &e,const std::vector<bool> &se) :
+    LabelMapSynthetiser(const IMG &i,const Size &r,const int &w,const int &h,const std::vector<bool> &se) :
         colors(0),
         bglam_in(transfoImg(i),r,nb_gray_level,se),
-        bglam_out(bglam_in.getRandImage(bglam_in.getImage().width()/8,
-                                        bglam_in.getImage().height()/8),r,nb_gray_level,se),
-        epsilon(e)
+        bglam_out(bglam_in.getRandImage(w,h),r,nb_gray_level,se)
     {
-        call_fonctions();
     }
 
-    LabelMapSynthetiser(const IMG &i,const std::vector<bool> &se) :
-        LabelMapSynthetiser(i,{{1,1}},0,se) {}
-    LabelMapSynthetiser(const IMG &i,const Size &r,const std::vector<bool> &se) :
-        LabelMapSynthetiser(i,r,0,se) {}
-    LabelMapSynthetiser(const IMG &i,const float &e,const std::vector<bool> &se) :
-        LabelMapSynthetiser(i,{{1,1}},e,se) {}
-
-    LabelMapSynthetiser(const IMG &i,const IMG &o,const Size &r,const float &e,const std::vector<bool> &se):
+    LabelMapSynthetiser(const IMG &i,const IMG &o,const Size &r,const std::vector<bool> &se):
         colors(0),
         bglam_in(transfoImg(i),r,nb_gray_level,se),
-        bglam_out(transfoImg(o),r,nb_gray_level,se),
-        epsilon(e)
+        bglam_out(transfoImg(o),r,nb_gray_level,se)
     {
-        call_fonctions();
     }
-
-    LabelMapSynthetiser(const IMG &i,const IMG &o,const std::vector<bool> &se) :
-        LabelMapSynthetiser(i,o,{{1,1}},0,se) {}
-    LabelMapSynthetiser(const IMG &i,const IMG &o,const Size &r,const std::vector<bool> &se) :
-        LabelMapSynthetiser(i,o,r,0,se) {}
-    LabelMapSynthetiser(const IMG &i,const IMG &o,const float &e,const std::vector<bool> &se) :
-        LabelMapSynthetiser(i,o,{{1,1}},e,se) {}
 
 
     ImageGrayu8 transfoImg(const IMG &i)
@@ -258,6 +193,36 @@ public:
             p = colors[i.pixelAbsolute(x,y)];
         });
         return out;
+    }
+
+    void synth(float epsilon)
+    {
+        computeConfigs();
+        compute(epsilon);
+        transfoImgBack(bglam_out.getImage()).save("out.png");
+        computeErrorMap().save("error_map.png");
+    }
+
+    void synthUp(/*const Size &r,*/float epsilon,unsigned int iter)
+    {
+        computeConfigs();
+        compute(epsilon);
+        transfoImgBack(bglam_out.getImage()).save("outUp.png");
+        computeErrorMap().save("errorUp.png");
+
+        unsigned int i = 1;
+        while (iter > 0) {
+        i*=2;
+        bglam_out.resolutionUp();
+        epsilon /= 2;
+        compute(epsilon);
+        std::stringstream name1,name2;
+        name1 << "outUp_x" << i << ".png";
+        name2 << "errorUp_x" << i << ".png";
+        transfoImgBack(bglam_out.getImage()).save(name1.str());
+        computeErrorMap().save(name2.str());
+        iter--;
+        }
     }
 };
 
